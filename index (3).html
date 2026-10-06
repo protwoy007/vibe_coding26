@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tender Package Builder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Sans:wght@400;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+:root{--bg:#eef2f4;--card:#fff;--ink:#14232b;--mute:#566872;--line:#cfd9de;--acc:#0b6e6e;--ok:#1b7a3d;--bad:#b3261e;--warn:#9a5a00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Noto Sans","Noto Sans Bengali",system-ui,sans-serif}
+header{background:var(--ink);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+header h1{margin:0;font-size:20px}
+main{max-width:1000px;margin:0 auto;padding:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+h2{margin:0 0 10px;font-size:18px}
+button,select,input{font:inherit}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:10px 16px;cursor:pointer;font-weight:600}
+.btn:disabled{background:#9fb1b8;cursor:not-allowed}
+.btn.alt{background:#fff;color:var(--acc);border:1px solid var(--acc)}
+.btn.sm{padding:4px 10px;font-size:14px}
+:focus-visible{outline:3px solid #f2b705;outline-offset:2px}
+.muted{color:var(--mute);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.grid b{display:block;font-size:13px;color:var(--mute);font-weight:600}
+.file{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.file span{word-break:break-all}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:13px;font-weight:600;background:#fde7d3;color:var(--warn)}
+.notice{background:#fdecea;color:var(--bad);border-radius:6px;padding:6px 10px;margin:6px 0;font-size:14px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:13px;color:var(--mute)}
+td select,td input{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.st{font-weight:700}.st.missing,.st.expired{color:var(--bad)}.st.need{color:var(--warn)}.st.ok{color:var(--ok)}.st.notprov{color:var(--mute)}
+.tbl{overflow-x:auto}
+#bar ul{margin:6px 0 12px;padding-left:20px;color:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:999px;font-weight:700;font-size:14px;background:#eef2f4}
+.pill.ok{background:#e1f3e7;color:var(--ok)}
+.pill.missing,.pill.expired{background:#fdecea;color:var(--bad)}
+.pill.need{background:#fff1d6;color:var(--warn)}
+.pill.notprov{background:#eef2f4;color:var(--mute)}
+tr.r-missing td:first-child,tr.r-expired td:first-child{border-left:4px solid var(--bad)}
+tr.r-need td:first-child{border-left:4px solid var(--warn)}
+tr.r-ok td:first-child{border-left:4px solid var(--ok)}
+#drop{border:2px dashed var(--line);border-radius:10px;padding:20px;text-align:center;background:#f7fafb;transition:.15s}
+#drop.on{border-color:var(--acc);background:#e3f2f2}
+#drop p{margin:0 0 10px;color:var(--mute)}
+.sumbar{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:16px;position:sticky;top:0;z-index:5}
+.prog{height:10px;background:#e1e8ec;border-radius:6px;overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--ok);transition:width .25s}
+#bar{position:sticky;bottom:0;max-height:45vh;overflow:auto;box-shadow:0 -4px 14px rgba(0,0,0,.1)}
+#gen{width:100%;font-size:18px;padding:14px}
+.btn:hover:not(:disabled){filter:brightness(1.1)}
+@media(max-width:640px){th{display:none}tr{display:block;border-top:1px solid var(--line);padding:6px 0}td{display:block;border:0;padding:4px 8px}}
+</style>
+</head>
+<body>
+<header><h1 id="h-title"></h1><button class="btn alt" id="langBtn"></button></header>
+<main>
+<div id="sum"></div>
+<section><h2 id="h1"></h2><button class="btn" id="b-json"></button><input type="file" id="in-json" accept=".json,application/json" hidden><div id="msg1"></div><div id="tender"></div></section>
+<section><h2 id="h2"></h2><div id="drop"><p id="dropTxt"></p><button class="btn" id="b-pdf"></button></div><input type="file" id="in-pdf" accept=".pdf,application/pdf" multiple hidden><p class="muted" id="limits"></p><div id="rej"></div><div id="files"></div></section>
+<section><h2 id="hLogo"></h2><p class="muted" id="logoHint"></p><div class="row"><button class="btn alt" id="b-logo"></button><button class="btn alt" id="b-logo-rm"></button></div><input type="file" id="in-logo" accept="image/png,image/jpeg" hidden><div id="logoBox"></div></section>
+<section><h2 id="h3"></h2><div class="row"><button class="btn alt sm" id="b-auto"></button><button class="btn alt sm" id="b-csv"></button></div><div class="tbl" id="reqs"></div></section>
+<section id="bar"><h2 id="h4"></h2><div id="why"></div><button class="btn" id="gen"></button><p id="out" class="muted"></p></section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const T={
+en:{title:"Tender Package Builder",h1:"1. Load the tender list",bjson:"Open requirements.json",hint:"Choose the requirements.json file to begin.",tid:"Tender ID",ttl:"Title",ent:"Procuring entity",bid:"Bidder",dl:"Submission deadline",
+h2:"2. Add your PDF files",bpdf:"Choose PDF files",limits:"Up to 30 files, 50 MB in total.",pages:"pages",rm:"Remove",dup:"Duplicate of {n}. It cannot be matched.",nofiles:"No files added yet.",
+notpdf:"{n}: not a PDF file, skipped.",bad:"{n}: damaged PDF, skipped.",pw:"{n}: password-protected PDF, skipped.",lim:"{n}: limit of 30 files / 50 MB reached, skipped.",
+h3:"3. Match files and check",doc:"Document",file:"File",exp:"Expiry date",stat:"Status",req:"Required",opt:"Optional",none:"— No file —",auto:"Auto-match by file name",csv:"Export checklist (CSV)",
+missing:"Missing",need:"Expiry date needed",expired:"Expired",notprov:"Not provided",ok:"OK",
+h4:"4. Make the package",gen:"Make package PDF",blocked:"Fix these first:",ready:"All checks passed. You can make the package.",work:"Making the package…",done:"Done. Your download has started.",fail:"Could not make the package: ",badjson:"This is not a valid requirements file.",needlist:"Load the tender list first.",drop:"Drag PDF files here, or",sum:"{a} of {b} documents ready",attn:"{n} need attention",allok:"Everything is ready.",hLogo:"Logo (optional)",logoHint:"Add your company logo (PNG or JPG). It will appear on the top right of the cover page.",bLogo:"Choose logo",rmLogo:"Remove logo",logoBad:"{n}: not a PNG or JPG image, skipped.",lang:"বাংলা"},
+bn:{title:"টেন্ডার প্যাকেজ নির্মাতা",h1:"১. টেন্ডার তালিকা লোড করুন",bjson:"requirements.json খুলুন",hint:"শুরু করতে requirements.json ফাইলটি বেছে নিন।",tid:"টেন্ডার আইডি",ttl:"শিরোনাম",ent:"ক্রয়কারী প্রতিষ্ঠান",bid:"দরদাতা",dl:"জমাদানের শেষ তারিখ",
+h2:"২. আপনার PDF ফাইল যোগ করুন",bpdf:"PDF ফাইল বেছে নিন",limits:"সর্বোচ্চ ৩০টি ফাইল, মোট ৫০ MB।",pages:"পৃষ্ঠা",rm:"মুছুন",dup:"{n} ফাইলের হুবহু কপি। এটি মিলানো যাবে না।",nofiles:"এখনো কোনো ফাইল যোগ করা হয়নি।",
+notpdf:"{n}: PDF ফাইল নয়, বাদ দেওয়া হয়েছে।",bad:"{n}: ফাইলটি নষ্ট, বাদ দেওয়া হয়েছে।",pw:"{n}: পাসওয়ার্ড দেওয়া PDF, বাদ দেওয়া হয়েছে।",lim:"{n}: ৩০টি ফাইল / ৫০ MB সীমা পূর্ণ, বাদ দেওয়া হয়েছে।",
+h3:"৩. ফাইল মিলান ও যাচাই করুন",doc:"নথি",file:"ফাইল",exp:"মেয়াদ শেষের তারিখ",stat:"অবস্থা",req:"আবশ্যক",opt:"ঐচ্ছিক",none:"— কোনো ফাইল নয় —",auto:"ফাইলের নাম দেখে স্বয়ংক্রিয় মিল",csv:"চেকলিস্ট এক্সপোর্ট (CSV)",
+missing:"অনুপস্থিত",need:"মেয়াদের তারিখ দিন",expired:"মেয়াদ উত্তীর্ণ",notprov:"দেওয়া হয়নি",ok:"ঠিক আছে",
+h4:"৪. প্যাকেজ তৈরি করুন",gen:"প্যাকেজ PDF তৈরি করুন",blocked:"আগে এগুলো ঠিক করুন:",ready:"সব যাচাই সফল। এখন প্যাকেজ তৈরি করতে পারেন।",work:"প্যাকেজ তৈরি হচ্ছে…",done:"সম্পন্ন। ডাউনলোড শুরু হয়েছে।",fail:"প্যাকেজ তৈরি করা যায়নি: ",badjson:"এটি সঠিক requirements ফাইল নয়।",needlist:"আগে টেন্ডার তালিকা লোড করুন।",drop:"PDF ফাইল এখানে টেনে আনুন, অথবা",sum:"{b}টি নথির মধ্যে {a}টি প্রস্তুত",attn:"{n}টিতে মনোযোগ দরকার",allok:"সব প্রস্তুত।",hLogo:"লোগো (ঐচ্ছিক)",logoHint:"আপনার কোম্পানির লোগো (PNG বা JPG) যোগ করুন। এটি প্রচ্ছদ পাতার উপরের ডানদিকে দেখা যাবে।",bLogo:"লোগো বেছে নিন",rmLogo:"লোগো মুছুন",logoBad:"{n}: PNG বা JPG ছবি নয়, বাদ দেওয়া হয়েছে।",lang:"English"}};
+let lang="en";try{lang=localStorage.getItem("lang")||"en"}catch(e){}
+const t=(k,v={})=>(T[lang][k]||k).replace(/\{(\w+)\}/g,(_,x)=>v[x]);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let logo=null,logoErr="";
+let data=null,files=[],match={},expiry={},rej=[],uid=0,status1="",outMsg="";
+
+const reqs=()=>data?[...data.requirements].sort((a,b)=>a.order-b.order):[];
+const fileById=id=>files.find(f=>f.id==id);
+const used=()=>Object.values(match);
+const dupOf=f=>files.find(g=>g.hash===f.hash&&files.indexOf(g)<files.indexOf(f));
+const ICON={ok:"✓",missing:"✕",expired:"✕",need:"!",notprov:"–"};
+const title=r=>(lang==="bn"&&r.title_bn)||r.title_en;
+function status(r){
+  if(!match[r.id])return r.mandatory?"missing":"notprov";
+  if(r.has_expiry){const e=expiry[r.id];if(!e)return"need";if(e<data.tender.submission_deadline)return"expired";}
+  return"ok";
+}
+const blocking=()=>reqs().filter(r=>["missing","need","expired"].includes(status(r)));
+const key=()=>"proj_"+data.tender.tender_id;
+
+function save(clear=[]){
+  if(!data)return;
+  try{
+    const o=JSON.parse(localStorage.getItem(key())||"{}");
+    clear.forEach(k=>delete o[k]);
+    for(const r of data.requirements)if(match[r.id]){const f=fileById(match[r.id]);if(f)o[r.id]={hash:f.hash,exp:expiry[r.id]||""}}
+    localStorage.setItem(key(),JSON.stringify(o));
+  }catch(e){}
+}
+function restore(){
+  if(!data)return;let o;
+  try{o=JSON.parse(localStorage.getItem(key())||"{}")}catch(e){return}
+  for(const r of reqs()){
+    const s=o[r.id];if(!s||match[r.id])continue;
+    const f=files.find(f=>f.hash===s.hash&&!dupOf(f)&&!used().includes(f.id));
+    if(f){match[r.id]=f.id;if(r.has_expiry&&s.exp)expiry[r.id]=s.exp}
+  }
+}
+
+function render(){
+  document.documentElement.lang=lang;
+  $("#h-title").textContent=t("title");$("#langBtn").textContent=t("lang");
+  for(const [id,k] of [["h1","h1"],["b-json","bjson"],["h2","h2"],["b-pdf","bpdf"],["limits","limits"],["h3","h3"],["h4","h4"],["gen","gen"],["b-auto","auto"],["b-csv","csv"],["dropTxt","drop"]])$("#"+id).textContent=t(k);
+  $("#b-auto").disabled=$("#b-csv").disabled=!data;
+  $("#msg1").innerHTML=data?"":`<p class="muted">${esc(status1||t("hint"))}</p>`;
+  $("#tender").innerHTML=data?`<div class="grid">${[["tid",data.tender.tender_id],["ttl",data.tender.title],["ent",data.tender.procuring_entity],["bid",data.tender.bidder],["dl",data.tender.submission_deadline]].map(([k,v])=>`<div><b>${t(k)}</b>${esc(v)}</div>`).join("")}</div>`:"";
+  $("#rej").innerHTML=rej.map(m=>`<div class="notice">${esc(t(m.k,{n:m.n}))}</div>`).join("");
+  $("#files").innerHTML=files.length?files.map(f=>{const d=dupOf(f);return `<div class="file"><div><span>${esc(f.name)}</span><br><span class="muted">${f.pages} ${t("pages")}</span> ${d?`<span class="tag">${esc(t("dup",{n:d.name}))}</span>`:""}</div><button class="btn alt sm" data-rm="${f.id}">${t("rm")}</button></div>`}).join(""):`<p class="muted">${t("nofiles")}</p>`;
+  $("#reqs").innerHTML=data?`<table><thead><tr><th>${t("doc")}</th><th>${t("file")}</th><th>${t("exp")}</th><th>${t("stat")}</th></tr></thead><tbody>${reqs().map(r=>{
+    const s=status(r),opts=files.filter(f=>!dupOf(f)&&(match[r.id]==f.id||!used().includes(f.id)));
+    return `<tr class="r-${s}"><td><b>${esc(title(r))}</b><br><span class="muted">${r.mandatory?t("req"):t("opt")}</span></td>
+    <td><select data-m="${r.id}" aria-label="${esc(title(r))}"><option value="">${t("none")}</option>${opts.map(f=>`<option value="${f.id}"${match[r.id]==f.id?" selected":""}>${esc(f.name)}</option>`).join("")}</select></td>
+    <td>${r.has_expiry&&match[r.id]?`<input type="date" data-e="${r.id}" value="${esc(expiry[r.id]||"")}" aria-label="${t("exp")}">`:"—"}</td>
+    <td><span class="pill ${s}">${ICON[s]} ${t(s)}</span></td></tr>`}).join("")}</tbody></table>`:"";
+  const bl=data?blocking():[];
+  $("#why").innerHTML=!data?`<p class="muted">${t("needlist")}</p>`:bl.length?`<b>${t("blocked")}</b><ul>${bl.map(r=>`<li>${esc(title(r))} — ${t(status(r))}</li>`).join("")}</ul>`:`<p style="color:var(--ok)"><b>${t("ready")}</b></p>`;
+  $("#gen").disabled=!data||bl.length>0;$("#out").textContent=outMsg;
+  if(data){const n=reqs().length,a=n-bl.length,pct=n?Math.round(a/n*100):0;
+    $("#sum").innerHTML=`<div class="sumbar"><b>${t("sum",{a,b:n})}</b> <span class="muted">${bl.length?t("attn",{n:bl.length}):t("allok")}</span><div class="prog"><i style="width:${pct}%"></i></div></div>`}
+  else $("#sum").innerHTML="";
+  renderLogo();
+}
+
+function renderLogo(){
+  $("#hLogo").textContent=t("hLogo");$("#logoHint").textContent=t("logoHint");
+  $("#b-logo").textContent=t("bLogo");$("#b-logo-rm").textContent=t("rmLogo");
+  $("#b-logo-rm").hidden=!logo;
+  $("#logoBox").innerHTML=(logoErr?`<div class="notice">${esc(t("logoBad",{n:logoErr}))}</div>`:"")+(logo?`<img src="${logo.url}" alt="" style="max-height:80px;max-width:100%">`:"");
+}
+async function setLogo(file){
+  logoErr="";
+  const b=new Uint8Array(await file.arrayBuffer());
+  const png=b[0]===0x89&&b[1]===0x50&&b[2]===0x4E&&b[3]===0x47,jpg=b[0]===0xFF&&b[1]===0xD8&&b[2]===0xFF;
+  if(!png&&!jpg){logoErr=file.name;render();return}
+  if(logo)URL.revokeObjectURL(logo.url);
+  logo={bytes:b,type:png?"png":"jpg",url:URL.createObjectURL(new Blob([b],{type:png?"image/png":"image/jpeg"}))};
+  render();
+}
+
+async function addFiles(list){
+  rej=[];let total=files.reduce((s,f)=>s+f.size,0);
+  for(const file of list){
+    const buf=new Uint8Array(await file.arrayBuffer());
+    const head=String.fromCharCode(...buf.slice(0,5));
+    if(!/\.pdf$/i.test(file.name)||head!=="%PDF-"){rej.push({k:"notpdf",n:file.name});continue}
+    if(files.length>=30||total+file.size>50*1024*1024){rej.push({k:"lim",n:file.name});continue}
+    try{
+      const doc=await PDFLib.PDFDocument.load(buf);
+      const h=await crypto.subtle.digest("SHA-256",buf);
+      const hash=[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join("");
+      files.push({id:++uid,name:file.name,size:file.size,pages:doc.getPageCount(),hash,buf});total+=file.size;
+    }catch(e){rej.push({k:/encrypt/i.test(e.name+e.message)?"pw":"bad",n:file.name})}
+  }
+  restore();render();
+}
+
+const STOP=new Set(["of","and","the","for","certificate","letter","pdf","copy","scan","final","document","new","old"]);
+const tok=s=>String(s).toLowerCase().replace(/\.pdf$/,"").split(/[^a-z0-9]+/).filter(w=>w.length>1&&!STOP.has(w));
+function autoMatch(){
+  for(const r of reqs()){
+    if(match[r.id])continue;
+    const words=new Set([...tok(r.title_en),String(r.id).toLowerCase()]);
+    let best=null,score=0;
+    for(const f of files){
+      if(dupOf(f)||used().includes(f.id))continue;
+      const s=tok(f.name).filter(w=>words.has(w)).length;
+      if(s>score){score=s;best=f}
+    }
+    if(best)match[r.id]=best.id;
+  }
+  save();outMsg="";render();
+}
+
+function exportCsv(){
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=[[t("doc"),t("file"),t("pages"),t("exp"),t("stat")]];
+  for(const r of reqs()){const f=fileById(match[r.id]);rows.push([title(r),f?f.name:"",f?f.pages:"",expiry[r.id]||"",t(status(r))])}
+  const blob=new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${data.tender.tender_id}_Checklist.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+}
+
+function wrap(txt,font,size,w){
+  const out=[];let line="";
+  for(const word of String(txt).split(/\s+/)){const x=line?line+" "+word:word;
+    if(font.widthOfTextAtSize(x,size)>w&&line){out.push(line);line=word}else line=x}
+  if(line)out.push(line);return out;
+}
+const L1=s=>String(s??"").replace(/[^\x20-\x7E\u00A0-\u00FF]/g,"?");
+const localDate=()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}-${String(n.getDate()).padStart(2,"0")}`};
+
+async function makePackage(){
+  const {PDFDocument,StandardFonts,rgb}=PDFLib,d=data.tender;
+  const inc=reqs().filter(r=>match[r.id]);
+  const out=await PDFDocument.create();
+  const reg=await out.embedFont(StandardFonts.Helvetica),bold=await out.embedFont(StandardFonts.HelveticaBold);
+  const fs=inc.length>18?9:11,step=fs+4;
+
+  const cover=out.addPage([595,842]);let y=780;
+  if(logo){
+    const img=logo.type==="png"?await out.embedPng(logo.bytes):await out.embedJpg(logo.bytes);
+    const k=Math.min(110/img.width,60/img.height,1);
+    cover.drawImage(img,{x:545-img.width*k,y:825-img.height*k,width:img.width*k,height:img.height*k});
+  }
+  cover.drawText("Tender Document Package",{x:50,y,size:24,font:bold,color:rgb(.08,.14,.17)});y-=40;
+  for(const [k,v] of [["Tender ID",d.tender_id],["Tender title",d.title],["Procuring entity",d.procuring_entity],["Bidder",d.bidder],["Submission deadline",d.submission_deadline],["Package made on",localDate()]]){
+    cover.drawText(k,{x:50,y,size:10,font:reg,color:rgb(.34,.41,.45)});y-=15;
+    for(const ln of wrap(L1(v),bold,13,495)){cover.drawText(ln,{x:50,y,size:13,font:bold});y-=17}y-=8}
+  y-=6;cover.drawText("Included documents",{x:50,y,size:15,font:bold});y-=22;
+  inc.forEach((r,i)=>{
+    const lines=wrap(`${i+1}. ${L1(r.title_en)}`,reg,fs,495);
+    lines.forEach((ln,j)=>cover.drawText(ln,{x:50,y:y-j*step,size:fs,font:reg}));
+    y-=lines.length*step+2});
+
+  const index=out.addPage([595,842]);y=780;
+  index.drawText("Index",{x:50,y,size:24,font:bold,color:rgb(.08,.14,.17)});y-=40;
+  let start=3;
+  inc.forEach((r,i)=>{
+    const f=fileById(match[r.id]);
+    const lines=wrap(`${i+1}. ${L1(r.title_en)}`,reg,fs,420);
+    lines.forEach((ln,j)=>index.drawText(ln,{x:50,y:y-j*step,size:fs,font:reg}));
+    const pg=`Page ${start}`;index.drawText(pg,{x:545-reg.widthOfTextAtSize(pg,fs),y,size:fs,font:reg});
+    y-=lines.length*step+2;start+=f.pages});
+
+  const STRIP=30;
+  for(const r of inc){
+    const src=await PDFDocument.load(fileById(match[r.id]).buf);
+    const emb=await out.embedPdf(src,src.getPageIndices());
+    for(const e of emb){const p=out.addPage([e.width,e.height+STRIP]);p.drawPage(e,{x:0,y:STRIP,width:e.width,height:e.height})}
+  }
+
+  const pages=out.getPages(),n=pages.length;
+  pages.forEach((p,i)=>{
+    const s=`${L1(d.tender_id)} | Page ${i+1} of ${n}`,w=reg.widthOfTextAtSize(s,10);
+    p.drawText(s,{x:(p.getWidth()-w)/2,y:12,size:10,font:reg,color:rgb(0,0,0)})});
+  const bytes=await out.save();
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
+  a.download=`${d.tender_id}_Package.pdf`;document.body.appendChild(a);a.click();a.remove();
+}
+
+$("#langBtn").onclick=()=>{lang=lang==="en"?"bn":"en";try{localStorage.setItem("lang",lang)}catch(e){}render()};
+$("#b-json").onclick=()=>$("#in-json").click();
+$("#b-pdf").onclick=()=>$("#in-pdf").click();
+$("#b-logo").onclick=()=>$("#in-logo").click();
+$("#b-logo-rm").onclick=()=>{if(logo)URL.revokeObjectURL(logo.url);logo=null;logoErr="";render()};
+$("#in-logo").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)setLogo(f)};
+$("#b-auto").onclick=autoMatch;
+$("#b-csv").onclick=exportCsv;
+$("#in-json").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{const j=JSON.parse(await f.text());
+    if(!j.tender||!j.tender.tender_id||!Array.isArray(j.requirements))throw 0;
+    data=j;match={};expiry={};status1="";outMsg="";restore()}
+  catch(err){data=null;status1=t("badjson")}
+  render();
+};
+$("#in-pdf").onchange=e=>{const l=[...e.target.files];e.target.value="";addFiles(l)};
+$("#files").onclick=e=>{const id=e.target.dataset.rm;if(!id)return;
+  const gone=[];for(const k in match)if(match[k]==id){gone.push(k);delete match[k];delete expiry[k]}
+  files=files.filter(f=>f.id!=id);save(gone);rej=[];outMsg="";render()};
+$("#reqs").onchange=e=>{
+  if(e.target.dataset.m){const k=e.target.dataset.m;
+    delete expiry[k];
+    if(e.target.value){match[k]=+e.target.value;save()}else{delete match[k];save([k])}}
+  if(e.target.dataset.e){expiry[e.target.dataset.e]=e.target.value;save()}
+  outMsg="";render();
+};
+$("#gen").onclick=async()=>{
+  if(blocking().length)return;
+  $("#gen").disabled=true;$("#out").textContent=t("work");
+  try{await makePackage();outMsg=t("done")}catch(err){outMsg=t("fail")+(err.message||err)}
+  render();
+};
+const dz=$("#drop");
+["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("on")}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("on")}));
+dz.addEventListener("drop",e=>addFiles([...e.dataTransfer.files]));
+["dragover","drop"].forEach(ev=>window.addEventListener(ev,e=>e.preventDefault()));
+render();
+</script>
+</body>
+</html>
