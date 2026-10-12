@@ -7,8 +7,6 @@ A frontend-only web app that helps office staff turn a set of PDF files into one
 ## Participant
 
 - Name: Khaled
-- Registration number: `<YOUR-REGISTRATION-NUMBER>`
-- Live link: `<YOUR-PUBLIC-HTTPS-LINK>`
 
 ## Project files
 
@@ -32,7 +30,6 @@ Plain HTML, CSS and JavaScript. No build step. pdf-lib is loaded from a CDN.
 3. Optional: add a logo and a seal/signature.
 4. Match each file to its document and enter expiry dates where asked.
 5. Fix everything listed under "Fix these first", then click **Make package PDF**.
-6. Chrome downloads `<tender_id>_Package.pdf`.
 
 ## Main features
 
@@ -42,13 +39,10 @@ Plain HTML, CSS and JavaScript. No build step. pdf-lib is loaded from a CDN.
 - Expiry date input, live status (Missing, Expiry date needed, Expired, Not provided, OK). Same-day expiry is OK.
 - Duplicate detection by SHA-256 content hash; duplicates cannot be matched.
 - Generate button disabled with a visible list of reasons.
-- Package PDF: English cover page, documents in order with all pages, footer `<tender_id> | Page X of Y` in a bottom margin so it never covers content.
-- Download as `<tender_id>_Package.pdf`.
 
 ## Languages
 
-English, Bangla (বাংলা), Hindi (हिन्दी) and Arabic (العربية, right-to-left). Pick one from the menu in the top bar. All labels, buttons, messages and statuses are translated. Document names use `title_bn` for Bangla and `title_en` for the other languages. The choice is remembered.
-
+English, Bangla (বাংলা), Hindi (हिन्दी) and Arabic (العربية, right-to-left). Pick one from the menu in the top bar. All labels, buttons, messages and statuses are translated.
 ## Bonus and extra features
 
 - Index page after the cover with the start page of each document.
@@ -74,12 +68,6 @@ English, Bangla (বাংলা), Hindi (हिन्दी) and Arabic (الع
 ## AI tools used
 
 - Claude (Anthropic) – wrote and edited the code.
-
-## Most useful prompt
-
-```
-<PASTE YOUR MOST USEFUL PROMPT HERE>
-```
 
 ## License
 
